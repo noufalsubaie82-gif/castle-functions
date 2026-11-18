@@ -130,17 +130,12 @@
     throw new Error('r2_points gen failed');
   };
 
-  // الغرفة 2-ب: رسم الدالة العكسية لدالة خطية
+  // الغرفة 2-ب: الدالة العكسية من جدول قيم (بدون رسم)
   GEN.r2_line = function (R) {
-    for (let t = 0; t < 500; t++) {
-      const m = R.pick([1, 2]), k = R.pick([1, 2, 3]); // نسخة مبسّطة
-      const invPts = [];
-      for (let y = -6; y <= 6; y++) { const x = m * y + k; if (x >= -6 && x <= 6) invPts.push([x, y]); }
-      if (invPts.length < 3) continue;
-      const fPts = invPts.map(([x, y]) => [y, x]);
-      return { m, k, f: lin(m, k), fPts, answer: invPts };
-    }
-    throw new Error('r2_line gen failed');
+    const m = R.pick([1, 2, 3]), k = R.int(1, 4);
+    const xs = [1, 2, 3, 4], ys = xs.map(x => m * x + k);
+    const qi = R.shuffle([0, 1, 2, 3]).slice(0, 2);
+    return { m, k, f: lin(m, k), xs, ys, asks: qi.map(i => ys[i]), answer: qi.map(i => xs[i]) };
   };
 
   // الغرفة 3: آلات التركيب
@@ -309,14 +304,13 @@
           const pts = ans.map(p => [Number(p[0]), Number(p[1])]);
           const want = new Set(d.answer.map(p => p.join(',')));
           const good = pts.filter(p => want.has(p.join(','))).length;
-          return { ok: sameSet(pts, d.answer), fb: { good, bad: pts.length - good, total: d.answer.length } };
+          const mask = d.answer.map((p, i) => !!pts[i] && pts[i][0] === p[0] && pts[i][1] === p[1]);
+          return { ok: sameSet(pts, d.answer), fb: { good, bad: pts.length - good, total: d.answer.length, mask } };
         }
         case 'r2_line': {
-          if (!Array.isArray(ans) || ans.length !== 2) return { ok: false, fb: { msg: 'اختاري نقطتين' } };
-          const pts = ans.map(p => [Number(p[0]), Number(p[1])]);
-          if (pts[0][0] === pts[1][0] && pts[0][1] === pts[1][1]) return { ok: false, fb: { msg: 'النقطتان متطابقتان' } };
-          const onInv = pts.map(([x, y]) => x === d.m * y + d.k);
-          return { ok: onInv[0] && onInv[1], fb: { onInv } };
+          if (!Array.isArray(ans) || ans.length !== d.answer.length) return { ok: false, fb: { msg: 'أكملي الأقراص' } };
+          const mask = d.answer.map((v, i) => Number(ans[i]) === v);
+          return { ok: mask.every(Boolean), fb: { mask, right: mask.filter(Boolean).length, total: mask.length } };
         }
         case 'r3_m1': case 'r3_m2': case 'r3_m3': {
           if (!Array.isArray(ans) || ans.length !== d.slots || ans.some(s => !'ABCD'.includes(s))) return { ok: false, fb: { msg: 'املئي كل الآلات' } };
@@ -377,15 +371,15 @@
       }
       case 'r2_points':
         return [
-          'معكوس العلاقة نحصل عليه بتبديل الإحداثيين في كل زوج مرتب.',
-          'المرآة هي المستقيم ' + M('y = x') + ': كل نقطة تنعكس إلى الجهة الأخرى منه بالمسافة نفسها.',
-          'النقطة ' + M('(' + n(d.points[0][0]) + ', ' + n(d.points[0][1]) + ')') + ' يقابلها في المعكوس النقطة التي إحداثيها السيني ' + M(n(d.points[0][1])) + '.'
+          'معكوس العلاقة نحصل عليه بتبديل الإحداثيين في كل زوج مرتب: ' + M('(a, b) → (b, a)') + '.',
+          'المرآة تقلب الزوج: العدد الأول يصبح ثانيًا، والثاني يصبح أولًا.',
+          'معكوس ' + M('(' + n(d.points[0][0]) + ', ' + n(d.points[0][1]) + ')') + ' يبدأ بالعدد ' + M(n(d.points[0][1])) + '.'
         ];
       case 'r2_line':
         return [
-          'منحنى الدالة العكسية هو انعكاس منحنى الدالة حول المستقيم ' + M('y = x') + '.',
-          'اختاري أي نقطة على المستقيم البرتقالي ثم بدّلي إحداثييها، فتحصلين على نقطة على المعكوس.',
-          'النقطة ' + M('(0, ' + n(d.k) + ')') + ' تقع على f، إذن النقطة ' + M('(' + n(d.k) + ', 0)') + ' تقع على ' + M(INV) + '. ابحثي عن نقطة ثانية بالطريقة نفسها.'
+          M(INV + '(b) = a') + ' تعني أن ' + M('f(a) = b') + ': الدالة العكسية تعكس الجدول، فالمُخرَج يصبح مُدخلًا.',
+          'ابحثي عن العدد في صف ' + M('f(x)') + ' ثم انظري إلى العدد الذي فوقه في صف ' + M('x') + '.',
+          'لإيجاد ' + M(INV + '(' + d.asks[0] + ')') + ': أين يقع العدد ' + M(String(d.asks[0])) + ' في الصف الثاني؟ وما العدد المكتوب فوقه؟'
         ];
       case 'r3_m1':
         return [

@@ -258,3 +258,20 @@ h1, h2, h3 { margin: 0 0 8px; }
   .node-x { width: 50px; height: 50px; }
   .hud .chip.time { display: none; }
 }
+
+/* الغرفة 2 بدون رسم */
+.mirrors { display: flex; flex-direction: column; gap: 14px; align-items: center; margin: 14px 0; }
+.mrow { display: flex; align-items: center; gap: 12px; direction: ltr; padding: 10px 14px; border-radius: 18px; background: rgba(255,255,255,.05); border: 2px solid rgba(165,243,252,.25); transition: all .3s; }
+.mrow.ok { border-color: var(--emerald); box-shadow: 0 0 18px rgba(34,197,94,.5); }
+.crystal { font-size: 1.5rem; font-weight: 900; color: #fca5a5; min-width: 86px; text-align: center; }
+.mglass { font-size: 34px; filter: drop-shadow(0 0 10px #a5f3fc); animation: glow 2s ease-in-out infinite alternate; }
+.mslot { display: flex; align-items: center; gap: 4px; }
+.mslot .par { font-size: 2rem; color: #a5f3fc; font-weight: 900; }
+.mslot .dial button { width: 44px; height: 28px; font-size: 14px; }
+.mslot .drum { width: 48px; height: 58px; font-size: 34px; }
+.ftable { margin: 12px auto 4px; border-collapse: separate; border-spacing: 6px; font-size: 1.35rem; font-weight: 800; }
+.ftable th, .ftable td { min-width: 52px; padding: 8px 10px; text-align: center; border-radius: 10px; }
+.ftable th { background: rgba(245,196,81,.2); color: var(--gold2); font-family: 'Cambria Math', serif; }
+.ftable td { background: rgba(255,255,255,.07); }
+.asks .lbl { font-size: 1.1rem; }
+@media (max-width: 640px) { .ftable { font-size: 1.1rem; border-spacing: 4px; } .ftable th, .ftable td { min-width: 40px; padding: 6px; } .crystal { font-size: 1.25rem; min-width: 70px; } }

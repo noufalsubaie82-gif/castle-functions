@@ -401,95 +401,65 @@
   }
   const gemPath = (cx, cy, s, fill, cls) => `<g class="${cls || ''}"><polygon points="${cx},${cy - s} ${cx + s * .8},${cy} ${cx},${cy + s} ${cx - s * .8},${cy}" fill="${fill}" stroke="#fff" stroke-width="1.5" filter="url(#glow)"/><polygon points="${cx},${cy - s} ${cx + s * .3},${cy} ${cx},${cy + s * .4} ${cx - s * .3},${cy}" fill="rgba(255,255,255,.35)"/></g>`;
 
+  // قرص أرقام صغير قابل لإعادة الاستخدام
+  function miniDial(value, onSet, lbl) {
+    const el = h('<div class="dial">' + (lbl ? '<span class="lbl">' + lbl + '</span>' : '') + '<button aria-label="أعلى">▲</button><div class="drum"><span class="digit">' + value + '</span></div><button aria-label="أسفل">▼</button></div>');
+    const drum = el.querySelector('.drum'); let v = value;
+    const set = (nv) => { v = (nv + 10) % 10; drum.querySelector('.digit').textContent = v; drum.classList.remove('roll'); void drum.offsetWidth; drum.classList.add('roll'); SFX.roll(); el.classList.remove('right'); onSet(v); };
+    el.querySelectorAll('button')[0].onclick = () => set(v + 1);
+    el.querySelectorAll('button')[1].onclick = () => set(v - 1);
+    let sy = null; drum.addEventListener('pointerdown', e => { sy = e.clientY; drum.setPointerCapture(e.pointerId); });
+    drum.addEventListener('pointermove', e => { if (sy === null) return; const dy = e.clientY - sy; if (Math.abs(dy) > 22) { set(v + (dy < 0 ? 1 : -1)); sy = e.clientY; } });
+    drum.addEventListener('pointerup', () => { sy = null; });
+    return el;
+  }
+
+  // ===== الغرفة 2-أ: مرآة الأزواج (بدون رسم) =====
   function pointsPuzzle(box, id, done) {
     const d = P.generate(id, me.seed);
-    const ui = local.ui[id] = local.ui[id] || { placed: [] };
     const NP = d.points.length;
-    const G = gridSvg(5, '', d.points.map(([x, y]) => gemPath(G0(x), G1(y), 13, '#ef4444') + `<text x="${G0(x) + 14}" y="${G1(y) - 10}" fill="#fca5a5" font-size="13" font-weight="bold" direction="ltr">(${x}, ${y})</text>`).join(''));
-    function G0(x) { return 30 + (x + 5) * 42; } function G1(y) { return 30 + (5 - y) * 42; }
+    const ui = local.ui[id] = local.ui[id] || {};
+    if (!Array.isArray(ui.pairs) || ui.pairs.length !== NP) ui.pairs = d.points.map(() => [0, 0]);
     const rel = d.points.map(p => '(' + n(p[0]) + ', ' + n(p[1]) + ')').join(' , ');
-    box.innerHTML = `<p class="lead center">في قاعة المرايا تقف <b style="color:#f87171">${NP} بلّورات حمراء</b> تمثّل العلاقة:<br>${M('R = { ' + rel + ' }')}<br>ضعي <b style="color:#38bdf8">الجواهر الزرقاء</b> في مواقع نقاط <b class="gold">العلاقة العكسية</b> — اضغطي على تقاطعات الشبكة. (اضغطي الجوهرة مرة أخرى لإزالتها)</p>
-      <div class="gw">${G.svg}</div><p class="center muted cnt"></p><div class="actions"><button class="btn go">🪞 أطلقي ضوء المرآة</button><button class="btn ghost small clr">مسح الكل</button></div><div class="feedback"></div>`;
-    const svgEl = box.querySelector('svg'), layer = svgEl.querySelector('.layer'), fbEl = box.querySelector('.feedback');
-    let fresh = null;
-    function draw() { layer.innerHTML = ui.placed.map(([x, y]) => gemPath(G.X(x), G.Y(y), 11, '#38bdf8', fresh === x + ',' + y ? 'gem-placed' : '')).join(''); fresh = null; box.querySelector('.cnt').textContent = 'الجواهر الموضوعة: ' + ui.placed.length + ' / ' + NP; saveLocal(); }
-    addHits(svgEl, G, (x, y) => {
-      const i = ui.placed.findIndex(p => p[0] === x && p[1] === y);
-      if (i >= 0) { ui.placed.splice(i, 1); SFX.click(); }
-      else {
-        if (d.points.some(p => p[0] === x && p[1] === y)) { fb(fbEl, 'هذه بلّورة حمراء (من العلاقة الأصلية). ضعي الجوهرة الزرقاء في الجهة الأخرى من المرآة: بدّلي الإحداثيين.', 'info'); SFX.bad(); return; }
-        if (ui.placed.length >= NP) { fb(fbEl, 'المعكوس فيه ' + NP + ' نقاط فقط. اضغطي جوهرة زرقاء لإزالتها.', 'info'); return; }
-        ui.placed.push([x, y]); fresh = x + ',' + y; SFX.place();
-      }
-      draw();
+    box.innerHTML = `<p class="lead center">في قاعة المرايا ${NP} بلّورات سحرية تمثّل العلاقة:<br>${M('R = { ' + rel + ' }')}<br>أمام كل بلّورة مرآة. أديري الأقراص في كل مرآة لتكتبي الزوج المقابل في <b class="gold">العلاقة العكسية</b> ${M('R<sup>−1</sup>')}، ثم أطلقي الضوء.</p>
+      <div class="mirrors"></div><div class="actions"><button class="btn go">🪞 أطلقي ضوء المرآة</button></div><div class="feedback"></div>`;
+    const wrap = box.querySelector('.mirrors'), fbEl = box.querySelector('.feedback');
+    const rows = d.points.map(([a, b], i) => {
+      const row = h(`<div class="mrow"><div class="crystal">${M('(' + a + ', ' + b + ')')}</div><div class="mglass">🪞</div><div class="mslot"><span class="par">(</span><span class="dl"></span><span class="par">,</span><span class="dl"></span><span class="par">)</span></div></div>`);
+      const dls = row.querySelectorAll('.dl');
+      [0, 1].forEach(j => dls[j].appendChild(miniDial(ui.pairs[i][j], v => { ui.pairs[i][j] = v; row.classList.remove('ok'); saveLocal(); })));
+      wrap.appendChild(row); return row;
     });
-    draw();
-    box.querySelector('.clr').onclick = () => { ui.placed = []; draw(); };
     const go = box.querySelector('.go');
     go.onclick = async () => {
-      if (ui.placed.length !== NP) { fb(fbEl, 'المعكوس له ' + NP + ' نقاط بعدد نقاط العلاقة. وضعتِ ' + ui.placed.length + '.', 'info'); return; }
-      go.disabled = true;
-      const res = await submit(id, ui.placed);
-      go.disabled = false;
-      if (res.ok) {
-        const beams = d.points.map(([x, y]) => `<line class="beam" x1="${G.X(x)}" y1="${G.Y(y)}" x2="${G.X(y)}" y2="${G.Y(x)}" stroke="#fde68a" stroke-width="3"/>`).join('');
-        svgEl.querySelector('.layer-under').insertAdjacentHTML('beforeend', beams);
-        fb(fbEl, '✨ انعكس الضوء تمامًا! كل نقطة (a, b) أصبحت (b, a).', 'good'); SFX.magic(); setTimeout(() => done(id), 1700); return;
-      }
-      SFX.bad(); shake(svgEl);
+      go.disabled = true; const res = await submit(id, ui.pairs.map(p => p.slice())); go.disabled = false;
+      if (res.ok) { rows.forEach(r => r.classList.add('ok')); fb(fbEl, '✨ انعكس الضوء تمامًا! كل زوج (a, b) أصبح (b, a).', 'good'); SFX.magic(); setTimeout(() => done(id), 1500); return; }
+      SFX.bad(); shake(wrap);
       const f = res.fb || {};
-      fb(fbEl, 'الضوء تشتّت… <b>' + (f.good ?? '?') + '</b> من ' + NP + ' جواهر في مكانها الصحيح.' + ((me.wrong[id] || 0) >= 2 ? '<br>تذكّري: المرآة هي ' + M('y = x') + ' — كل جوهرة زرقاء تقع على الجهة الأخرى من المرآة مقابل بلّورتها الحمراء تمامًا.' : ''), 'bad');
+      if ((me.wrong[id] || 0) >= 2 && f.mask) f.mask.forEach((ok, i) => rows[i].classList.toggle('ok', ok));
+      fb(fbEl, 'الضوء تشتّت… <b>' + (f.good ?? '?') + '</b> من ' + NP + ' أزواج صحيحة.' + ((me.wrong[id] || 0) >= 2 ? '<br>✨ الأزواج الصحيحة تتوهج بالأخضر.' : ''), 'bad');
     };
   }
 
+  // ===== الغرفة 2-ب: جدول الدالة والمرآة (بدون رسم) =====
   function linePuzzle(box, id, done) {
     const d = P.generate(id, me.seed);
-    const ui = local.ui[id] = local.ui[id] || { picks: [] };
-    const R = 6, pad = 30, unit = (480 - 2 * pad) / (2 * R);
-    const X = x => pad + (x + R) * unit, Y = y => pad + (R - y) * unit;
-    // مستقيم f مقصوص داخل الشبكة
-    const ea = (-R - d.k) / d.m, eb = (R - d.k) / d.m;
-    const lo = Math.max(-R, Math.min(ea, eb)), hi = Math.min(R, Math.max(ea, eb));
-    const fLine = `<line x1="${X(lo)}" y1="${Y(d.m * lo + d.k)}" x2="${X(hi)}" y2="${Y(d.m * hi + d.k)}" stroke="#fb923c" stroke-width="5" stroke-linecap="round" filter="url(#glow)"/>` +
-      d.fPts.map(([x, y]) => `<circle cx="${X(x)}" cy="${Y(y)}" r="5" fill="#fdba74"/>`).join('') +
-      d.fPts.filter(([x, y]) => x >= 0 && x !== y).slice(0, 3).map(([x, y]) => `<text x="${X(x) + 9}" y="${Y(y) + 5}" fill="#fdba74" font-size="14" font-weight="bold" direction="ltr">(${x}, ${y})</text>`).join('');
-    const G = gridSvg(R, fLine);
-    box.innerHTML = `<p class="lead center">شعاع برتقالي يمثّل الدالة ${M('f(x) = ' + d.f)} يخترق القاعة. لكي تفتحي الباب السرّي ارسمي <b class="gold">شعاع الدالة العكسية</b> ${M(F.INV + '(x)')}: اختاري <b>نقطتين</b> تقعان على منحنى ${M(F.INV)}.<br><span class="muted">تلميح: على الشعاع البرتقالي نقاط مكتوبة إحداثياتها — بدّلي إحداثيي أي نقطة منها.</span></p>
-      <div class="gw">${G.svg}</div><p class="center muted cnt"></p><div class="actions"><button class="btn go">⚡ ثبّتي الشعاع</button><button class="btn ghost small clr">مسح</button></div><div class="feedback"></div>`;
-    const svgEl = box.querySelector('svg'), layer = svgEl.querySelector('.layer'), fbEl = box.querySelector('.feedback');
-    function draw() {
-      let s = '';
-      if (ui.picks.length === 2) {
-        const [[x1, y1], [x2, y2]] = ui.picks;
-        if (x1 !== x2 || y1 !== y2) {
-          let ax, ay, bx, by;
-          if (x1 === x2) { ax = bx = x1; ay = -R; by = R; }
-          else { const m = (y2 - y1) / (x2 - x1); const yAt = x => y1 + m * (x - x1); const cands = []; [-R, R].forEach(x => { const y = yAt(x); if (y >= -R - 1e-9 && y <= R + 1e-9) cands.push([x, y]); }); if (m !== 0) [-R, R].forEach(y => { const x = x1 + (y - y1) / m; if (x >= -R && x <= R) cands.push([x, y]); }); cands.sort((a, b) => a[0] - b[0]); [ax, ay] = cands[0]; [bx, by] = cands[cands.length - 1]; }
-          s += `<line x1="${X(ax)}" y1="${Y(ay)}" x2="${X(bx)}" y2="${Y(by)}" stroke="#22d3ee" stroke-width="4" stroke-dasharray="10 6" class="beam" filter="url(#glow)"/>`;
-        }
-      }
-      s += ui.picks.map(([x, y]) => gemPath(X(x), Y(y), 10, '#22d3ee')).join('');
-      layer.innerHTML = s; box.querySelector('.cnt').innerHTML = 'النقاط المختارة: ' + ui.picks.map(p => M('(' + n(p[0]) + ', ' + n(p[1]) + ')')).join(' ، ');
-      saveLocal();
-    }
-    addHits(svgEl, { X, Y, unit, R }, (x, y) => {
-      const i = ui.picks.findIndex(p => p[0] === x && p[1] === y);
-      if (i >= 0) ui.picks.splice(i, 1); else { ui.picks.push([x, y]); if (ui.picks.length > 2) ui.picks.shift(); }
-      SFX.place(); draw();
-    });
-    draw();
-    box.querySelector('.clr').onclick = () => { ui.picks = []; draw(); };
-    const go = box.querySelector('.go');
-    go.onclick = async () => {
-      if (ui.picks.length !== 2) { fb(fbEl, 'اختاري نقطتين بالضبط.', 'info'); return; }
-      go.disabled = true; const res = await submit(id, ui.picks); go.disabled = false;
-      if (res.ok) { fb(fbEl, '⚡ الشعاعان متناظران حول المرآة! انفتح الباب السري.', 'good'); SFX.magic(); svgEl.style.transition = 'filter 1s'; svgEl.style.filter = 'brightness(1.6) saturate(1.5)'; setTimeout(() => done(id), 1500); return; }
-      SFX.bad(); shake(svgEl);
+    const ui = local.ui[id] = local.ui[id] || {};
+    if (!Array.isArray(ui.vals) || ui.vals.length !== d.asks.length) ui.vals = d.asks.map(() => 0);
+    const head = d.xs.map(x => '<td>' + x + '</td>').join(''), body = d.ys.map(y => '<td>' + y + '</td>').join('');
+    box.innerHTML = `<p class="lead center">على جدار القاعة لوح سحري يُظهر قيم الدالة ${M('f')}. الباب السرّي يُفتح بقيمتين من <b class="gold">الدالة العكسية</b> ${M(F.INV)}.</p>
+      <table class="ftable" dir="ltr"><tr><th>x</th>${head}</tr><tr><th>f(x)</th>${body}</tr></table>
+      <div class="vault asks"></div><div class="actions"><button class="btn lever">🔓 افتحي الباب السري</button></div><div class="feedback"></div>`;
+    const vault = box.querySelector('.asks'), fbEl = box.querySelector('.feedback');
+    const dials = d.asks.map((v, i) => { const el = miniDial(ui.vals[i], nv => { ui.vals[i] = nv; saveLocal(); }, '<span class="m" dir="ltr">' + F.INV + '(' + v + ')</span>'); vault.appendChild(el); return el; });
+    const lever = box.querySelector('.lever');
+    lever.onclick = async () => {
+      lever.disabled = true; const res = await submit(id, ui.vals.slice()); lever.disabled = false;
+      if (res.ok) { fb(fbEl, '🔓 انفتح الباب السري!', 'good'); SFX.unlock(); setTimeout(() => done(id), 1200); return; }
+      SFX.bad(); shake(vault);
       const f = res.fb || {};
-      if (f.onInv) {
-        const bad = ui.picks.filter((p, i) => !f.onInv[i]);
-        fb(fbEl, bad.map(([x, y]) => 'النقطة ' + M('(' + n(x) + ', ' + n(y) + ')') + ' ليست على ' + M(F.INV) + ' — تحقّقي: هل النقطة ' + M('(' + n(y) + ', ' + n(x) + ')') + ' تقع على الشعاع البرتقالي؟').join('<br>'), 'bad');
-      } else fb(fbEl, f.msg || 'حاولي مرة أخرى', 'bad');
+      if (f.mask) f.mask.forEach((ok, i) => dials[i].classList.toggle('right', ok && (me.wrong[id] || 0) >= 2));
+      fb(fbEl, 'الباب لم ينفتح… <b>' + (f.right ?? '?') + '</b> من ' + d.asks.length + ' صحيحة. تذكّري: ' + M(F.INV + '(b) = a') + ' تعني ' + M('f(a) = b') + '.', 'bad');
     };
   }
 
