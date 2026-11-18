@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: castle-of-functions
+    runtime: node
+    plan: free
+    buildCommand: echo "no build needed"
+    startCommand: node server.js
+    envVars:
+      - key: TEACHER_PASSWORD
+        sync: false

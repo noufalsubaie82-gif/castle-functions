@@ -1,0 +1,10 @@
+{
+  "name": "castle-of-functions",
+  "version": "1.0.0",
+  "description": "الهروب من قلعة الدوال — لعبة هروب تعليمية لتركيب الدوال والدوال العكسية مع لوحة مراقبة لحظية للمعلمة",
+  "main": "server.js",
+  "scripts": { "start": "node server.js", "test": "node test/puzzles.test.js && node test/sim.test.js" },
+  "engines": { "node": ">=18" },
+  "license": "UNLICENSED",
+  "private": true
+}

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>غرفة المراقبة — قلعة الدوال</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Tajawal:wght@400;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👁️</text></svg>">
+<style>
+  body { font-size: 16px; }
+  .tbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 14px; background: rgba(11,8,32,.92); border-bottom: 1px solid rgba(245,196,81,.25); position: sticky; top: 0; z-index: 20; }
+  .tbar h1 { font-family: var(--title); font-weight: 400; color: var(--gold); font-size: 1.6rem; margin: 0 4px 0 10px; }
+  .live { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; font-size: .9rem; }
+  .live i { width: 11px; height: 11px; border-radius: 50%; background: #64748b; display: inline-block; }
+  .live.on i { background: #22c55e; box-shadow: 0 0 10px #22c55e; animation: blink 1.6s infinite; }
+  .tbar select { padding: 7px 10px; border-radius: 10px; background: #1b1438; color: var(--ink); border: 1px solid rgba(245,196,81,.35); font-family: inherit; font-size: .95rem; }
+  .main { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 14px; padding: 14px; }
+  @media (max-width: 1000px) { .main { grid-template-columns: 1fr; } }
+  .mapbox { position: relative; border-radius: 20px; overflow: hidden; background: linear-gradient(180deg, #1a1236, #0d0a20); border: 2px solid rgba(245,196,81,.25); box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+  .mapbox svg.bg { display: block; width: 100%; height: auto; }
+  .avs { position: absolute; inset: 0; }
+  .avt { position: absolute; display: flex; flex-direction: column; align-items: center; transition: left 1.5s cubic-bezier(.45,.05,.3,1), top 1.5s cubic-bezier(.45,.05,.3,1), opacity .5s; cursor: pointer; z-index: 2; }
+  .avt .face { border-radius: 50%; display: grid; place-items: center; border: 3px solid; background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.3), rgba(0,0,0,.35)); box-shadow: 0 4px 12px rgba(0,0,0,.5); position: relative; }
+  .avt .face .prog { position: absolute; inset: -6px; border-radius: 50%; }
+  .avt .nm { margin-top: 3px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; background: rgba(0,0,0,.55); border-radius: 8px; padding: 0 5px; line-height: 1.5; }
+  .avt.off { opacity: .4; filter: grayscale(.7); }
+  .avt.walk .face { animation: bob .45s ease-in-out infinite; }
+  .avt .crown { position: absolute; top: -16px; font-size: 18px; }
+  .pop { position: absolute; font-weight: 900; color: #86efac; text-shadow: 0 2px 6px #000; animation: popup 2s forwards; pointer-events: none; z-index: 5; font-size: 1.1rem; white-space: nowrap; }
+  @keyframes popup { from { transform: translate(-50%, 0); opacity: 1; } to { transform: translate(-50%, -60px); opacity: 0; } }
+  .side { display: flex; flex-direction: column; gap: 14px; }
+  .lb-row { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 10px; background: rgba(255,255,255,.04); margin-bottom: 5px; transition: transform .4s; }
+  .lb-row .rk { width: 28px; text-align: center; font-weight: 900; font-size: 1.1rem; }
+  .lb-row .nm { flex: 1; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-row .sc { font-weight: 900; color: var(--gold); }
+  .feed { max-height: 300px; overflow: auto; font-size: .92rem; }
+  .feed div { padding: 6px 4px; border-bottom: 1px solid rgba(255,255,255,.06); animation: tin .3s; }
+  .feed time { color: var(--muted); font-size: .8rem; margin-inline-start: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+  th, td { padding: 8px 6px; border-bottom: 1px solid rgba(255,255,255,.07); text-align: center; white-space: nowrap; }
+  th { color: var(--gold2); position: sticky; top: 0; background: #1a1236; cursor: pointer; }
+  td.nmc { text-align: right; font-weight: 800; }
+  tbody tr { cursor: pointer; } tbody tr:hover { background: rgba(255,255,255,.05); }
+  .dots { display: inline-flex; gap: 3px; direction: ltr; }
+  .dot { width: 14px; height: 14px; border-radius: 4px; background: rgba(255,255,255,.12); display: inline-block; }
+  .dot.s { background: #22c55e; } .dot.g { background: linear-gradient(135deg, #22c55e, #38bdf8); box-shadow: 0 0 6px #38bdf8; } .dot.c { background: #f5c451; box-shadow: 0 0 6px #f5c451; } .dot.w { background: #f5c451; box-shadow: 0 0 0 2px #ef4444; }
+  .tablewrap { overflow: auto; max-height: 70vh; }
+  .stchip { font-size: .85rem; padding: 3px 9px; border-radius: 999px; }
+  .stchip.on { background: rgba(34,197,94,.18); color: #86efac; } .stchip.off { background: rgba(148,163,184,.15); color: #94a3b8; } .stchip.fin { background: rgba(245,196,81,.2); color: var(--gold2); }
+  body.board .tablesec { display: none; }
+  body.board .main { grid-template-columns: minmax(0, 1fr) 300px; }
+  .link-big { direction: ltr; font-size: clamp(1.4rem, 4vw, 2.6rem); font-weight: 900; color: var(--gold); word-break: break-all; text-align: center; margin: 10px 0; }
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: .85rem; color: var(--muted); align-items: center; }
+  .empty-msg { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; color: var(--muted); font-size: 1.2rem; pointer-events: none; }
+</style>
+</head>
+<body>
+<canvas id="sky"></canvas>
+<div id="app"></div>
+<div class="toasts" id="toasts"></div>
+<script src="/puzzles.js"></script>
+<script src="/audio.js"></script>
+<script src="/teacher.js"></script>
+</body>
+</html>
