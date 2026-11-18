@@ -5,7 +5,7 @@
   const app = document.getElementById('app');
   const LS = 'castle_v1';
   const CLASSES = ['ثاني ثانوي 4', 'ثاني ثانوي 5', 'ثاني ثانوي 6', 'ثاني ثانوي 7'];
-  const BOMB_SECONDS = 360;
+  const BOMB_SECONDS = 480;
 
   // ---------- التخزين المحلي ----------
   let local = {};
@@ -296,6 +296,8 @@
     const dots = r === 5 ? '' : ids.map(id => '<span class="stage-dot ' + (solved(id) ? 'done' : id === curId ? 'cur' : '') + '"></span>').join('');
     const w = h(`<div class="room"><div class="room-head"><span class="ic">${info.icon}</span><div><h2>${info.name}</h2><div class="stages">${dots}</div></div></div><div class="stone"><span class="torch l"></span><span class="torch r"></span><div class="stage" style="padding-top:44px"></div></div></div>`);
     view = 'room:' + curId; hintFor = r === 5 ? null : curId;
+    const rule = P.RULES[curId];
+    if (rule) w.querySelector('.room-head').insertAdjacentHTML('afterend', '<div class="parch rule"><b>📜 القاعدة:</b> ' + rule + '</div>');
     shell(w); ping();
     const box = w.querySelector('.stage');
     const done = async (id) => {
@@ -321,7 +323,7 @@
   function lockPuzzle(box, id, done) {
     const d = P.generate(id, me.seed);
     const ui = local.ui[id] = local.ui[id] || { found: [], dials: d.answer.map(() => 0) };
-    const items = id === 'r1_ops' ? ['📜', '🛡️', '🏺', '🕯️', '📚'] : ['📜', '🪔', '💀', '🧪'];
+    const items = (id === 'r1_ops' ? ['📜', '🛡️', '🏺', '🕯️', '📚'] : ['📜', '🪔', '💀', '🧪']).slice(0, d.answer.length + 1);
     const N = ['①', '②', '③', '④'];
     const clueHtml = (i) => {
       if (i === 0) return '<b>لفافة الساحر:</b><br>' + M('f(x) = ' + d.f) + '<br>' + M('g(x) = ' + d.g);
@@ -332,7 +334,7 @@
       }
       return '<span class="num">' + N[i - 1] + '</span> الرقم = ' + M(c.label + '(' + n(c.x) + ')');
     };
-    box.innerHTML = `<p class="lead center">${id === 'r1_ops' ? 'بوابة القلعة مغلقة بقفل من <b class="gold">4 أقراص</b>. فتّشي الغرفة بحثًا عن اللفائف المخبّأة، ثم أديري الأقراص على الأرقام الصحيحة واسحبي الذراع.' : 'خلف البوابة قفل ثانٍ أقوى: <b class="gold">قفل التركيب</b> بثلاثة أقراص. اللفائف مخبأة مرة أخرى!'}</p>
+    box.innerHTML = `<p class="lead center">${id === 'r1_ops' ? 'بوابة القلعة مغلقة بقفل من <b class="gold">' + d.answer.length + ' أقراص</b>. فتّشي الغرفة بحثًا عن اللفائف المخبّأة، ثم أديري الأقراص على الأرقام الصحيحة واسحبي الذراع.' : 'خلف البوابة قفل ثانٍ: <b class="gold">قفل التركيب</b> برقمين. اللفائف مخبأة مرة أخرى!'}</p>
       <div class="hotspots" style="grid-template-columns:repeat(${items.length},1fr)"></div><div class="clues"></div>
       <div class="vault"></div><div class="actions"><button class="btn lever">🔓 اسحبي الذراع</button></div><div class="feedback"></div>`;
     const hs = box.querySelector('.hotspots'), cl = box.querySelector('.clues'), vault = box.querySelector('.vault'), fbEl = box.querySelector('.feedback');
@@ -469,8 +471,7 @@
     const ui = local.ui[id] = local.ui[id] || { slots: Array(d.slots).fill(null) };
     const colors = { A: '#16a34a', B: '#2563eb', C: '#c026d3', D: '#ea580c' };
     const labels = Object.fromEntries(d.tiles.map(t => [t.id, t.label]));
-    const intro = id === 'r3_m1' ? 'في مختبر الخيميائي آلات سحرية: تدخل <b>x</b> من اليسار، وتمرّ بالآلة ① أولًا ثم ②. ضعي في كل آلة قارورة دالة (اسحبيها أو اضغطيها ثم اضغطي الآلة) حتى تصنعي الإكسير المطلوب. تذكّري: إذا كانت f في ① و g في ② فالناتج ' + M('(g ∘ f)(x) = g(f(x))') + '.'
-      : id === 'r3_m2' ? 'إكسير جديد! احذري: ترتيب الآلات يغيّر كل شيء.' : 'الآلة الكبرى بثلاث مراحل. الإكسير المطلوب مكتوب بصورته المفكوكة — فكّكيه لتعرفي ترتيب الدوال.';
+    const intro = id === 'r3_m1' ? 'ضعي في كل آلة قارورة (اسحبيها، أو اضغطيها ثم اضغطي الآلة)، ثم اضغطي «شغّلي الآلة» حتى تصنعي الإكسير المطلوب.' : 'إكسير جديد! انتبهي لترتيب الآلات.';
     box.innerHTML = `<p class="lead center">${intro}</p><div class="target">الإكسير المطلوب: ${M('h(x) = ' + d.target)}</div>
       <div class="lab"><div class="shelf"></div><div class="pipeline"></div></div>
       <div class="actions"><button class="btn go">⚙️ شغّلي الآلة</button><button class="btn ghost small clr">إفراغ الآلات</button></div><div class="feedback"></div>`;
@@ -537,7 +538,7 @@
     const d = P.generate(id, me.seed);
     const ui = local.ui[id] = local.ui[id] || { links: {} };
     const AR = ['أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز'];
-    box.innerHTML = `<p class="lead center">في السرداب خمس <b style="color:#c4b5fd">أرواح</b> (دوال)، ولكل روح <b class="gold">ظلٌّ</b> واحد هو دالتها العكسية — لكن بين الظلال اثنان مزيّفان! اضغطي روحًا ثم ظلّها لربطهما. استخدمي «مِسبار الأرواح» لاختبار أي رابط.</p>
+    box.innerHTML = `<p class="lead center">في السرداب ${d.funcs.length} <b style="color:#c4b5fd">أرواح</b> (دوال)، ولكل روح <b class="gold">ظلٌّ</b> واحد هو دالتها العكسية — وبين الظلال ظلٌّ مزيّف! اضغطي روحًا ثم ظلّها لربطهما. استخدمي «مِسبار الأرواح» لاختبار أي رابط.</p>
       <div class="crypt"><svg class="links"></svg><div class="col left"></div><div class="col right"></div></div>
       <div class="probe parch"><b>🔮 مِسبار الأرواح:</b> اختاري روحًا مربوطة، ثم أدخلي عددًا ${M('a')} لتري ${M('g(f(a))')}:
         <div class="row" style="justify-content:center;margin-top:8px"><input type="number" class="pin" value="2" step="any"><button class="btn small pgo">اختبري</button></div><div class="chain"></div></div>
@@ -573,14 +574,14 @@
     };
     const go = box.querySelector('.go');
     go.onclick = async () => {
-      if (Object.keys(ui.links).length < d.funcs.length) { fb(fbEl, 'اربطي الأرواح الخمس كلها (' + Object.keys(ui.links).length + '/5).', 'info'); return; }
+      if (Object.keys(ui.links).length < d.funcs.length) { fb(fbEl, 'اربطي كل الأرواح (' + Object.keys(ui.links).length + '/' + d.funcs.length + ').', 'info'); return; }
       go.disabled = true; const res = await submit(id, ui.links); go.disabled = false;
       if (res.ok) { showOk = true; draw(); fb(fbEl, '🔮 اتحدت كل روح بظلها! انفتح باب السرداب.', 'good'); SFX.magic(); setTimeout(() => done(id), 1500); return; }
       SFX.bad(); shake(crypt);
       const f = res.fb || {};
       if ((me.wrong[id] || 0) >= 2) showOk = true;
       draw();
-      fb(fbEl, 'ارتدّت الطاقة! <b>' + (f.good ?? '?') + '</b> من 5 روابط صحيحة.' + (showOk ? '<br>✨ الروابط الصحيحة تتوهج الآن بالأخضر.' : ''), 'bad');
+      fb(fbEl, 'ارتدّت الطاقة! <b>' + (f.good ?? '?') + '</b> من ' + d.funcs.length + ' روابط صحيحة.' + (showOk ? '<br>✨ الروابط الصحيحة تتوهج الآن بالأخضر.' : ''), 'bad');
     };
   }
 
@@ -591,16 +592,14 @@
     local.bomb = local.bomb && local.bomb.v === variant ? local.bomb : { v: variant, start: Date.now(), pen: 0, cuts: [], key: '', fin: '' };
     saveLocal();
     const B = local.bomb;
-    const dw = P.generate('r5_wires', me.seed, variant), dk = P.generate('r5_key', me.seed, variant), df = P.generate('r5_final', me.seed, variant);
-    box.innerHTML = `<p class="lead center">الكنز محميّ بقنبلة سحرية! عطّلي <b>الوحدات الثلاث</b> قبل أن ينتهي الوقت. الأخطاء تُنقص من الوقت.</p>
-      <div class="bomb"><div class="center"><div class="timer">06:00</div></div><div class="modules">
+    const dw = P.generate('r5_wires', me.seed, variant), dk = P.generate('r5_key', me.seed, variant);
+    box.innerHTML = `<p class="lead center">الكنز محميّ بقنبلة سحرية! عطّلي <b>الوحدتين</b> قبل أن ينتهي الوقت. الأخطاء تُنقص من الوقت.</p>
+      <div class="bomb"><div class="center"><div class="timer">08:00</div></div><div class="modules">
         <div class="module" data-m="r5_wires"><h3><span class="led"></span> ① أسلاك الخط الأفقي <button class="iconbtn hb" style="margin-inline-start:auto;width:32px;height:32px">🏮</button></h3>
           <p style="margin:4px 0 8px;font-size:.95rem">اقطعي كل سلك يتصل بمنحنى دالة <b>ليس لها دالة عكسية</b>.</p><div class="wires"></div>
           <div class="ruler-wrap">📏 المسطرة الأفقية <input type="range" min="-4.8" max="4.8" step="0.1" value="1" class="ruler"></div></div>
         <div class="module" data-m="r5_key"><h3><span class="led"></span> ② لوحة المعكوس <button class="iconbtn hb" style="margin-inline-start:auto;width:32px;height:32px">🏮</button></h3>
           <p style="margin:4px 0">${M('f(x) = ' + dk.f)}</p><p style="margin:4px 0 8px">أدخلي قيمة ${M(F.INV + '(' + n(dk.v) + ')')}</p><div class="lcd" data-for="key"></div><div class="keypad" data-for="key"></div></div>
-        <div class="module" data-m="r5_final"><h3><span class="led"></span> ③ الصمام الأخير <button class="iconbtn hb" style="margin-inline-start:auto;width:32px;height:32px">🏮</button></h3>
-          <p style="margin:4px 0">${M('f(x) = ' + df.f)} &nbsp;&nbsp; ${M('g(x) = ' + df.g)}</p><p style="margin:4px 0 8px">أدخلي قيمة ${M('(' + F.INV + ' ∘ g)(' + n(df.p) + ')')}</p><div class="lcd" data-for="fin"></div><div class="keypad" data-for="fin"></div></div>
       </div><div class="feedback"></div></div>`;
     const fbEl = box.querySelector('.feedback'), timerEl = box.querySelector('.timer');
     box.querySelectorAll('.module').forEach(m => { m.querySelector('.hb').onclick = () => openHints(m.dataset.m); });
@@ -652,7 +651,7 @@
       };
       pad.appendChild(ent); show();
     }
-    keypad('key', 'r5_key', dk); keypad('fin', 'r5_final', df);
+    keypad('key', 'r5_key', dk);
     // المؤقت
     clearInterval(bombTimer);
     let exploding = false;

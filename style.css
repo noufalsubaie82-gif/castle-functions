@@ -275,3 +275,6 @@ h1, h2, h3 { margin: 0 0 8px; }
 .ftable td { background: rgba(255,255,255,.07); }
 .asks .lbl { font-size: 1.1rem; }
 @media (max-width: 640px) { .ftable { font-size: 1.1rem; border-spacing: 4px; } .ftable th, .ftable td { min-width: 40px; padding: 6px; } .crystal { font-size: 1.25rem; min-width: 70px; } }
+
+.rule { margin: 0 0 12px; font-size: 1.05rem; line-height: 2; }
+.rule small { font-size: .9rem; color: #5b4321; }
