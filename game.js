@@ -373,7 +373,7 @@
   }
 
   // ===== الغرفة 2: شبكة إحداثيات =====
-  function gridSvg(R, extra) {
+  function gridSvg(R, extra, over) {
     const pad = 30, size = 480, unit = (size - 2 * pad) / (2 * R);
     const X = x => pad + (x + R) * unit, Y = y => pad + (R - y) * unit;
     let g = '';
@@ -388,7 +388,7 @@
       ${g}<text x="${X(R) - 4}" y="${Y(0) - 6}" fill="#e2e8f0" font-size="14" text-anchor="end">x</text><text x="${X(0) + 6}" y="${Y(R) + 12}" fill="#e2e8f0" font-size="14">y</text>
       <line class="mirror-line" x1="${X(-R)}" y1="${Y(-R)}" x2="${X(R)}" y2="${Y(R)}"/><line class="mirror-shine" x1="${X(-R)}" y1="${Y(-R)}" x2="${X(R)}" y2="${Y(R)}"/>
       <text x="${X(R) - 40}" y="${Y(R) + 30}" fill="#a5f3fc" font-size="15" font-weight="bold">y = x 🪞</text>
-      <g class="layer-under">${extra || ''}</g><g class="layer"></g><g class="hits"></g></svg>`;
+      <g class="layer-under">${extra || ''}</g><g class="layer"></g><g class="layer-over" pointer-events="none">${over || ''}</g><g class="hits"></g></svg>`;
     return { svg, X, Y, unit, R };
   }
   function addHits(svgEl, G, onTap) {
@@ -404,25 +404,30 @@
   function pointsPuzzle(box, id, done) {
     const d = P.generate(id, me.seed);
     const ui = local.ui[id] = local.ui[id] || { placed: [] };
-    const G = gridSvg(5, d.points.map(([x, y]) => gemPath(G0(x), G1(y), 11, '#ef4444')).join(''));
+    const NP = d.points.length;
+    const G = gridSvg(5, '', d.points.map(([x, y]) => gemPath(G0(x), G1(y), 13, '#ef4444') + `<text x="${G0(x) + 14}" y="${G1(y) - 10}" fill="#fca5a5" font-size="13" font-weight="bold" direction="ltr">(${x}, ${y})</text>`).join(''));
     function G0(x) { return 30 + (x + 5) * 42; } function G1(y) { return 30 + (5 - y) * 42; }
     const rel = d.points.map(p => '(' + n(p[0]) + ', ' + n(p[1]) + ')').join(' , ');
-    box.innerHTML = `<p class="lead center">في قاعة المرايا تقف <b style="color:#f87171">أربع بلّورات حمراء</b> تمثّل العلاقة:<br>${M('R = { ' + rel + ' }')}<br>ضعي <b style="color:#38bdf8">الجواهر الزرقاء</b> في مواقع نقاط <b class="gold">العلاقة العكسية</b> — اضغطي على تقاطعات الشبكة. (اضغطي الجوهرة مرة أخرى لإزالتها)</p>
+    box.innerHTML = `<p class="lead center">في قاعة المرايا تقف <b style="color:#f87171">${NP} بلّورات حمراء</b> تمثّل العلاقة:<br>${M('R = { ' + rel + ' }')}<br>ضعي <b style="color:#38bdf8">الجواهر الزرقاء</b> في مواقع نقاط <b class="gold">العلاقة العكسية</b> — اضغطي على تقاطعات الشبكة. (اضغطي الجوهرة مرة أخرى لإزالتها)</p>
       <div class="gw">${G.svg}</div><p class="center muted cnt"></p><div class="actions"><button class="btn go">🪞 أطلقي ضوء المرآة</button><button class="btn ghost small clr">مسح الكل</button></div><div class="feedback"></div>`;
     const svgEl = box.querySelector('svg'), layer = svgEl.querySelector('.layer'), fbEl = box.querySelector('.feedback');
     let fresh = null;
-    function draw() { layer.innerHTML = ui.placed.map(([x, y]) => gemPath(G.X(x), G.Y(y), 11, '#38bdf8', fresh === x + ',' + y ? 'gem-placed' : '')).join(''); fresh = null; box.querySelector('.cnt').textContent = 'الجواهر الموضوعة: ' + ui.placed.length + ' / 4'; saveLocal(); }
+    function draw() { layer.innerHTML = ui.placed.map(([x, y]) => gemPath(G.X(x), G.Y(y), 11, '#38bdf8', fresh === x + ',' + y ? 'gem-placed' : '')).join(''); fresh = null; box.querySelector('.cnt').textContent = 'الجواهر الموضوعة: ' + ui.placed.length + ' / ' + NP; saveLocal(); }
     addHits(svgEl, G, (x, y) => {
       const i = ui.placed.findIndex(p => p[0] === x && p[1] === y);
       if (i >= 0) { ui.placed.splice(i, 1); SFX.click(); }
-      else { if (ui.placed.length >= 6) { fb(fbEl, 'جواهر كثيرة! المعكوس فيه 4 نقاط فقط.', 'info'); return; } ui.placed.push([x, y]); fresh = x + ',' + y; SFX.place(); }
+      else {
+        if (d.points.some(p => p[0] === x && p[1] === y)) { fb(fbEl, 'هذه بلّورة حمراء (من العلاقة الأصلية). ضعي الجوهرة الزرقاء في الجهة الأخرى من المرآة: بدّلي الإحداثيين.', 'info'); SFX.bad(); return; }
+        if (ui.placed.length >= NP) { fb(fbEl, 'المعكوس فيه ' + NP + ' نقاط فقط. اضغطي جوهرة زرقاء لإزالتها.', 'info'); return; }
+        ui.placed.push([x, y]); fresh = x + ',' + y; SFX.place();
+      }
       draw();
     });
     draw();
     box.querySelector('.clr').onclick = () => { ui.placed = []; draw(); };
     const go = box.querySelector('.go');
     go.onclick = async () => {
-      if (ui.placed.length !== 4) { fb(fbEl, 'المعكوس له ' + d.points.length + ' نقاط بعدد نقاط العلاقة. وضعتِ ' + ui.placed.length + '.', 'info'); return; }
+      if (ui.placed.length !== NP) { fb(fbEl, 'المعكوس له ' + NP + ' نقاط بعدد نقاط العلاقة. وضعتِ ' + ui.placed.length + '.', 'info'); return; }
       go.disabled = true;
       const res = await submit(id, ui.placed);
       go.disabled = false;
@@ -433,7 +438,7 @@
       }
       SFX.bad(); shake(svgEl);
       const f = res.fb || {};
-      fb(fbEl, 'الضوء تشتّت… <b>' + (f.good ?? '?') + '</b> من 4 جواهر في مكانها الصحيح.' + ((me.wrong[id] || 0) >= 2 ? '<br>تذكّري: المرآة هي ' + M('y = x') + ' — كل جوهرة زرقاء تقع على الجهة الأخرى من المرآة مقابل بلّورتها الحمراء تمامًا.' : ''), 'bad');
+      fb(fbEl, 'الضوء تشتّت… <b>' + (f.good ?? '?') + '</b> من ' + NP + ' جواهر في مكانها الصحيح.' + ((me.wrong[id] || 0) >= 2 ? '<br>تذكّري: المرآة هي ' + M('y = x') + ' — كل جوهرة زرقاء تقع على الجهة الأخرى من المرآة مقابل بلّورتها الحمراء تمامًا.' : ''), 'bad');
     };
   }
 
@@ -446,9 +451,10 @@
     const ea = (-R - d.k) / d.m, eb = (R - d.k) / d.m;
     const lo = Math.max(-R, Math.min(ea, eb)), hi = Math.min(R, Math.max(ea, eb));
     const fLine = `<line x1="${X(lo)}" y1="${Y(d.m * lo + d.k)}" x2="${X(hi)}" y2="${Y(d.m * hi + d.k)}" stroke="#fb923c" stroke-width="5" stroke-linecap="round" filter="url(#glow)"/>` +
-      d.fPts.map(([x, y]) => `<circle cx="${X(x)}" cy="${Y(y)}" r="4" fill="#fdba74"/>`).join('');
+      d.fPts.map(([x, y]) => `<circle cx="${X(x)}" cy="${Y(y)}" r="5" fill="#fdba74"/>`).join('') +
+      d.fPts.filter(([x, y]) => x >= 0 && x !== y).slice(0, 3).map(([x, y]) => `<text x="${X(x) + 9}" y="${Y(y) + 5}" fill="#fdba74" font-size="14" font-weight="bold" direction="ltr">(${x}, ${y})</text>`).join('');
     const G = gridSvg(R, fLine);
-    box.innerHTML = `<p class="lead center">شعاع برتقالي يمثّل الدالة ${M('f(x) = ' + d.f)} يخترق القاعة. لكي تفتحي الباب السرّي ارسمي <b class="gold">شعاع الدالة العكسية</b> ${M(F.INV + '(x)')}: اختاري <b>نقطتين</b> تقعان على منحنى ${M(F.INV)}.</p>
+    box.innerHTML = `<p class="lead center">شعاع برتقالي يمثّل الدالة ${M('f(x) = ' + d.f)} يخترق القاعة. لكي تفتحي الباب السرّي ارسمي <b class="gold">شعاع الدالة العكسية</b> ${M(F.INV + '(x)')}: اختاري <b>نقطتين</b> تقعان على منحنى ${M(F.INV)}.<br><span class="muted">تلميح: على الشعاع البرتقالي نقاط مكتوبة إحداثياتها — بدّلي إحداثيي أي نقطة منها.</span></p>
       <div class="gw">${G.svg}</div><p class="center muted cnt"></p><div class="actions"><button class="btn go">⚡ ثبّتي الشعاع</button><button class="btn ghost small clr">مسح</button></div><div class="feedback"></div>`;
     const svgEl = box.querySelector('svg'), layer = svgEl.querySelector('.layer'), fbEl = box.querySelector('.feedback');
     function draw() {

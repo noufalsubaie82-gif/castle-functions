@@ -112,11 +112,12 @@
 
   // الغرفة 2-أ: معكوس علاقة (نقاط)
   GEN.r2_points = function (R) {
+    // نسخة مبسّطة: 3 نقاط في الربع الأول بإحداثيات من 1 إلى 5
     for (let t = 0; t < 500; t++) {
       const pts = [];
       const seen = new Set();
-      while (pts.length < 4) {
-        const x = R.int(-4, 4), y = R.int(-4, 4);
+      while (pts.length < 3) {
+        const x = R.int(1, 5), y = R.int(1, 5);
         if (x === y) continue;
         const k = x + ',' + y; if (seen.has(k)) continue;
         seen.add(k); pts.push([x, y]);
@@ -132,7 +133,7 @@
   // الغرفة 2-ب: رسم الدالة العكسية لدالة خطية
   GEN.r2_line = function (R) {
     for (let t = 0; t < 500; t++) {
-      const m = R.pick([2, -2, 3, -3]), k = R.int(-3, 3);
+      const m = R.pick([1, 2]), k = R.pick([1, 2, 3]); // نسخة مبسّطة
       const invPts = [];
       for (let y = -6; y <= 6; y++) { const x = m * y + k; if (x >= -6 && x <= 6) invPts.push([x, y]); }
       if (invPts.length < 3) continue;
