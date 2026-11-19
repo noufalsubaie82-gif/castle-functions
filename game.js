@@ -192,6 +192,7 @@
       <div class="panel">
         <h1 class="game-title">الهروب من قلعة الدوال</h1>
         <p class="sub">خمس غرف… خمسة مفاتيح… وكنز ينتظر من تفكّ ألغاز الدوال</p>
+        <p class="credit">إعداد: أ. نوف السبيعي</p>
         <label class="field"><span>اسمك</span><input id="nm" maxlength="30" autocomplete="off" placeholder="مثال: ريم خالد"></label>
         <label class="field"><span>فصلك</span><select id="cl"><option value="">— اختاري —</option>${opts}<option value="__o">فصل آخر…</option></select></label>
         <label class="field hidden" id="otherWrap"><span>اكتبي اسم الفصل</span><input id="clo" maxlength="20"></label>
@@ -685,7 +686,7 @@
       <h1 class="game-title">هربتِ من قلعة الدوال!</h1><p class="lead">أحسنتِ يا ${'<b class="gold nm"></b>'}! فككتِ كل الشفرات، وعكستِ المرايا، وركّبتِ الإكسير، وعطّلتِ القنبلة.</p>
       <div class="stats"><div class="stat"><b>${me.score}</b>النقاط</div><div class="stat"><b>${me.gems} 💎</b>الجواهر</div><div class="stat"><b>${mins}</b>دقيقة</div><div class="stat"><b>${me.totalHints}</b>تلميحات</div><div class="stat"><b>${me.totalWrong}</b>محاولات خاطئة</div></div>
       <div class="parch" style="text-align:right"><b>📜 خلاصة مغامرتك:</b><br>• ${M('(f ∘ g)(x) = f(g(x))')}: الداخلية أولًا.<br>• معكوس العلاقة: بدّلي ${M('(a, b) → (b, a)')}، والمنحنى ينعكس حول ${M('y = x')}.<br>• الدالة لها معكوس إذا اجتازت اختبار الخط الأفقي.<br>• f و g عكسيتان إذا كان ${M('f(g(x)) = g(f(x)) = x')}.</div>
-      <div class="actions"><button class="btn ghost" id="mp">🗺️ الخريطة</button></div></div>`);
+      <div class="actions"><button class="btn ghost" id="mp">🗺️ الخريطة</button></div><p class="credit">إعداد: أ. نوف السبيعي</p></div>`);
     shell(w); w.querySelector('.nm').textContent = me.name;
     w.querySelector('#mp').onclick = () => renderMap();
     if (fresh) { SFX.fanfare(); fx.confetti(220); setTimeout(() => fx.confetti(160), 900); }

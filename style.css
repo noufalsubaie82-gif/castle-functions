@@ -278,3 +278,5 @@ h1, h2, h3 { margin: 0 0 8px; }
 
 .rule { margin: 0 0 12px; font-size: 1.05rem; line-height: 2; }
 .rule small { font-size: .9rem; color: #5b4321; }
+
+.credit { text-align: center; color: var(--gold2); font-weight: 800; font-size: 1rem; margin: -6px 0 14px; letter-spacing: .3px; opacity: .95; }

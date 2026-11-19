@@ -24,7 +24,7 @@
   // ---------- الدخول ----------
   function renderLogin(err) {
     app.innerHTML = '';
-    const el = h(`<div class="join"><div class="panel" style="width:min(420px,100%)"><h1 class="game-title" style="font-size:2.2rem">👁️ غرفة المراقبة</h1><p class="sub">لوحة المعلمة — قلعة الدوال</p>
+    const el = h(`<div class="join"><div class="panel" style="width:min(420px,100%)"><h1 class="game-title" style="font-size:2.2rem">👁️ غرفة المراقبة</h1><p class="sub">لوحة المعلمة — قلعة الدوال</p><p class="credit">إعداد: أ. نوف السبيعي</p>
       <label class="field"><span>كلمة المرور</span><input type="password" id="pw" autocomplete="current-password"></label><div class="err">${err || ''}</div>
       <button class="btn" id="go" style="width:100%">دخول</button></div></div>`);
     app.appendChild(el);
@@ -49,7 +49,7 @@
     const c = r => { const [x, y, w, hh] = ZONES[r]; return [x + w / 2, y + hh / 2]; };
     const path = [1, 2, 3, 4, 5, 6].map((r, i) => (i ? 'L' : 'M') + c(r).join(' ')).join(' ');
     const el = h(`<div>
-      <div class="tbar"><h1>👁️ غرفة المراقبة</h1><span class="live" id="live"><i></i><span>جارٍ الاتصال…</span></span>
+      <div class="tbar"><h1>👁️ غرفة المراقبة</h1><span class="credit" style="margin:0">إعداد: أ. نوف السبيعي</span><span class="live" id="live"><i></i><span>جارٍ الاتصال…</span></span>
         <span class="chip" id="stats"></span><span class="grow"></span>
         <select id="cls"><option value="all">كل الفصول</option></select>
         <button class="btn small ghost" id="link">🔗 رابط الطالبات</button>
